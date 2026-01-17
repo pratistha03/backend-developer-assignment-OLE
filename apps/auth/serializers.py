@@ -38,8 +38,3 @@ class UserSerializer(serializers.ModelSerializer):
             user.save()
         return user
 
-class UserProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['id', 'email', 'full_name', 'role', 'is_active', 'created_at']
-        read_only_fields = ['id', 'email', 'role', 'created_at']

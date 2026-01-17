@@ -6,7 +6,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
 from apps.auth.models import User
-from apps.auth.serializers import UserRegistrationSerializer, UserProfileSerializer, UserSerializer
+from apps.auth.serializers import UserRegistrationSerializer, UserSerializer
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -48,9 +48,4 @@ class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-class UserProfileView(generics.RetrieveUpdateAPIView):
-    serializer_class = UserProfileSerializer
-    
-    
-    def get_object(self):
-        return self.request.user
+
