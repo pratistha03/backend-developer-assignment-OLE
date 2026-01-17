@@ -60,6 +60,31 @@ A Django REST Framework-based course platform that allows instructors to create 
    docker-compose exec web python manage.py createsuperuser
    ```
 
+## Common Test Commands
+
+```bash
+# Quick test run (all tests, minimal output)
+python manage.py test
+
+# Detailed test run (verbose output)
+python manage.py test --verbosity=2
+
+# Run specific app tests with details
+python manage.py test apps.courses --verbosity=2
+
+# Run tests and keep database
+python manage.py test --keepdb --verbosity=2
+
+# Run only authorization tests
+python manage.py test apps.courses.tests.AuthorizationBoundaryTestCase --verbosity=2
+
+# Run only enrollment logic tests
+python manage.py test apps.courses.tests.EnrollmentLogicTestCase --verbosity=2
+
+# Run only async task tests
+python manage.py test apps.courses.tests.AsyncTaskTriggeringTestCase --verbosity=2
+``` 
+
 ### Manual Setup
 
 1. **Install dependencies**
@@ -71,15 +96,24 @@ A Django REST Framework-based course platform that allows instructors to create 
    - Create a database named `course_platform`
    - Update database credentials in `core/settings.py` or use environment variables
 
-3. **Set environment variables** (optional)
+3. **Set environment variables** 
    ```bash
-   export DB_NAME=course_platform
-   export DB_USER=postgres
-   export DB_PASSWORD=postgres
-   export DB_HOST=localhost
-   export DB_PORT=5432
-   export CELERY_BROKER_URL=redis://localhost:6379/0
-   export CELERY_RESULT_BACKEND=redis://localhost:6379/0
+   DB_NAME=course_platform
+   DB_USER=postgres
+   DB_PASSWORD=postgres
+   DB_HOST=localhost
+   DB_PORT=5432
+   
+   EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+   EMAIL_USE_TLS = True
+   EMAIL_HOST = 'smtp.mailtrap.io'
+   EMAIL_PORT = 2525
+   EMAIL_HOST_USER = 'your_email@example.com'
+   EMAIL_HOST_PASSWORD = 'your_email_password'
+   DEFAULT_FROM_EMAIL = 'your_email@example.com'
+
+   CELERY_BROKER_URL=redis://localhost:6379/0
+   CELERY_RESULT_BACKEND=redis://localhost:6379/0
    ```
 
 4. **Run migrations**
@@ -106,6 +140,17 @@ A Django REST Framework-based course platform that allows instructors to create 
    ```bash
    python manage.py runserver
    ```
+
+### Using docker-compose run (one-off container)
+
+```bash
+# Run tests in a new container
+docker-compose run --rm web python manage.py test
+
+# With verbose output
+docker-compose run --rm web python manage.py test --verbosity=2
+```
+
 
 ## API Documentation
 
@@ -166,40 +211,8 @@ To use authenticated endpoints in Swagger:
 - Worker service: Defined in `docker-compose.yml`
 
 
-### Using docker-compose run (one-off container)
 
-```bash
-# Run tests in a new container
-docker-compose run --rm web python manage.py test
 
-# With verbose output
-docker-compose run --rm web python manage.py test --verbosity=2
-```
-
-## Common Test Commands
-
-```bash
-# Quick test run (all tests, minimal output)
-python manage.py test
-
-# Detailed test run (verbose output)
-python manage.py test --verbosity=2
-
-# Run specific app tests with details
-python manage.py test apps.courses --verbosity=2
-
-# Run tests and keep database
-python manage.py test --keepdb --verbosity=2
-
-# Run only authorization tests
-python manage.py test apps.courses.tests.AuthorizationBoundaryTestCase --verbosity=2
-
-# Run only enrollment logic tests
-python manage.py test apps.courses.tests.EnrollmentLogicTestCase --verbosity=2
-
-# Run only async task tests
-python manage.py test apps.courses.tests.AsyncTaskTriggeringTestCase --verbosity=2
-```
 
 
 
