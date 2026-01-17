@@ -1,6 +1,6 @@
 from django.db import models
 from apps.auth.models import User, Role
-from apps.courses.models.course import Course
+from apps.courses.models import Course
 from apps.base.models import BaseModel
 
 
