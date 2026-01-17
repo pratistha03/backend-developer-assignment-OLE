@@ -1,7 +1,8 @@
 from celery import shared_task
 from django.core.mail import send_mail
 from django.conf import settings
-from apps.courses.models import Enrollment
+from apps.courses.models.enrollment import Enrollment
+import logging
 
 
 @shared_task
@@ -24,7 +25,7 @@ def send_course_completion_notification(enrollment_id):
         """
         
        
-        print(f"Sending completion notification to {student.email} for course {course.title}")
+        logging.info(f"Sending completion notification to {student.email} for course {course.title}")
         
         send_mail(
             subject=subject,

@@ -5,14 +5,17 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError, PermissionDenied, NotFound
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema, OpenApiResponse
+
 from apps.courses.models.course import Course
 from apps.courses.models.lesson import Lesson, LessonProgress
 from apps.courses.models.enrollment import Enrollment
+from apps.auth.models import Role
+
 from apps.courses.serializers.course import CourseSerializer, CourseCreateSerializer
 from apps.courses.serializers.lesson import LessonSerializer, LessonCreateSerializer, LessonBulkCreateSerializer, LessonProgressSerializer
 from apps.courses.serializers.enrollment import EnrollmentSerializer, EnrollmentProgressSerializer
+
 from apps.courses.permissions import IsInstructor, IsStudent, IsCourseOwner, IsEnrollmentOwner
-from apps.auth.models import Role
 
 
 class CourseViewSet(viewsets.ModelViewSet):  
