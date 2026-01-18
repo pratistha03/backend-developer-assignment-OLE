@@ -46,7 +46,7 @@ A Django REST Framework-based course platform that allows instructors to create 
 
 2. **Build and start containers**
    ```bash
-   docker-compose up --build
+   docker compose up --build
    ```
 
    This will start:
@@ -57,7 +57,7 @@ A Django REST Framework-based course platform that allows instructors to create 
 
 3. **Create a superuser** (in a new terminal)
    ```bash
-   docker-compose exec web python manage.py createsuperuser
+   docker compose exec web python manage.py createsuperuser
    ```
 
 ## Common Test Commands
@@ -145,10 +145,10 @@ python manage.py test apps.courses.tests.AsyncTaskTriggeringTestCase --verbosity
 
 ```bash
 # Run tests in a new container
-docker-compose run --rm web python manage.py test
+docker compose run --rm web python manage.py test
 
 # With verbose output
-docker-compose run --rm web python manage.py test --verbosity=2
+docker compose run --rm web python manage.py test --verbosity=2
 ```
 
 
