@@ -64,16 +64,19 @@ A Django REST Framework-based course platform that allows instructors to create 
 
 ```bash
 # Quick test run (all tests, minimal output)
-python manage.py test
+python manage.py test apps
 
 # Detailed test run (verbose output)
-python manage.py test --verbosity=2
+python manage.py test apps --verbosity=2
+
+# Or specify apps explicitly
+python manage.py test apps.auth apps.courses --verbosity=2
 
 # Run specific app tests with details
 python manage.py test apps.courses --verbosity=2
 
 # Run tests and keep database
-python manage.py test --keepdb --verbosity=2
+python manage.py test apps --keepdb --verbosity=2
 
 # Run only authorization tests
 python manage.py test apps.courses.tests.AuthorizationBoundaryTestCase --verbosity=2
@@ -145,10 +148,10 @@ python manage.py test apps.courses.tests.AsyncTaskTriggeringTestCase --verbosity
 
 ```bash
 # Run tests in a new container
-docker compose run --rm web python manage.py test
+docker compose run --rm web python manage.py test apps
 
 # With verbose output
-docker compose run --rm web python manage.py test --verbosity=2
+docker compose run --rm web python manage.py test apps --verbosity=2
 ```
 
 

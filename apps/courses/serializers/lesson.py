@@ -21,19 +21,28 @@ class LessonCreateSerializer(serializers.ModelSerializer):
 
 
 
+class LessonBulkItemSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=255)
+    content = serializers.CharField()
+    order = serializers.IntegerField(min_value=1)
+
+
 class LessonBulkCreateSerializer(serializers.Serializer):
     course = serializers.IntegerField(write_only=True)
-    lessons = LessonSerializer(many=True)
+    lessons = LessonBulkItemSerializer(many=True)
     
     def validate_lessons(self, value):
-        orders = [lesson.get('order') for lesson in value if lesson.get('order')]
+        if not value:
+            raise serializers.ValidationError("At least one lesson is required.")
+        
+        orders = [lesson['order'] for lesson in value]
         if len(orders) != len(set(orders)):
             raise serializers.ValidationError("Lesson orders must be unique within the request.")
         return value
     
-    def create(self, validated_data):
-        course_id = validated_data.pop('course')
-        lessons_data = validated_data.pop('lessons')
+    def validate(self, attrs):
+        course_id = attrs.get('course')
+        lessons_data = attrs.get('lessons', [])
         
         from apps.courses.models.course import Course
         try:
@@ -52,9 +61,23 @@ class LessonBulkCreateSerializer(serializers.Serializer):
                 {"lessons": f"Lesson orders {sorted(conflicting_orders)} already exist in this course."}
             )
         
+        return attrs
+    
+    def create(self, validated_data):
+        course_id = validated_data.pop('course')
+        lessons_data = validated_data.pop('lessons')
+        
+        from apps.courses.models.course import Course
+        course = Course.objects.get(id=course_id)
+        
         lessons = []
         for lesson_data in lessons_data:
-            lesson = Lesson.objects.create(course=course, **lesson_data)
+            lesson = Lesson.objects.create(
+                course=course,
+                title=lesson_data['title'],
+                content=lesson_data['content'],
+                order=lesson_data['order']
+            )
             lessons.append(lesson)
         
         return lessons

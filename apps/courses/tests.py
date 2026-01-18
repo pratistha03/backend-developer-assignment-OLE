@@ -22,10 +22,9 @@ User = get_user_model()
 
 
 class CourseBusinessRulesTestCase(APITestCase):
-    """Test core business rules for courses"""
     
     def setUp(self):
-        """Set up test data"""
+        # Set up test data
         self.instructor = User.objects.create_user(
             email='instructor@test.com',
             password='testpass123',
@@ -42,7 +41,7 @@ class CourseBusinessRulesTestCase(APITestCase):
         self.student_token = RefreshToken.for_user(self.student)
     
     def test_course_created_in_draft_state(self):
-        """Courses should be created in draft state"""
+        # Courses should be created in draft state
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.instructor_token.access_token}')
         
         response = self.client.post('/api/courses/', {
@@ -56,7 +55,7 @@ class CourseBusinessRulesTestCase(APITestCase):
         self.assertEqual(course.status, 'draft')
     
     def test_course_code_auto_generated(self):
-        """Course code should be auto-generated"""
+        # Course code should be auto-generated
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.instructor_token.access_token}')
         
         response = self.client.post('/api/courses/', {
@@ -69,7 +68,7 @@ class CourseBusinessRulesTestCase(APITestCase):
         self.assertTrue(response.data['code'].startswith('COURSE-'))
     
     def test_only_published_courses_visible_to_students(self):
-        """Students should only see published courses"""
+        # Students should only see published courses
         # Create draft and published courses
         draft_course = Course.objects.create(
             title='Draft Course',
@@ -93,7 +92,7 @@ class CourseBusinessRulesTestCase(APITestCase):
         self.assertIn(published_course.id, course_ids)
     
     def test_instructors_see_only_own_courses(self):
-        """Instructors should only see their own courses"""
+        # Instructors should only see their own courses
         other_instructor = User.objects.create_user(
             email='other@test.com',
             password='testpass123',
@@ -123,11 +122,9 @@ class CourseBusinessRulesTestCase(APITestCase):
         self.assertNotIn(other_course.id, course_ids)
 
 
-class AuthorizationBoundaryTestCase(APITestCase):
-    """Test authorization boundaries"""
-    
+class AuthorizationBoundaryTestCase(APITestCase):    
     def setUp(self):
-        """Set up test data"""
+        # Set up test data
         self.instructor = User.objects.create_user(
             email='instructor@test.com',
             password='testpass123',
@@ -159,7 +156,7 @@ class AuthorizationBoundaryTestCase(APITestCase):
         self.other_instructor_token = RefreshToken.for_user(self.other_instructor)
     
     def test_students_cannot_create_courses(self):
-        """Students should not be able to create courses"""
+        # Students should not be able to create courses
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.student_token.access_token}')
         
         response = self.client.post('/api/courses/', {
@@ -170,7 +167,7 @@ class AuthorizationBoundaryTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
     
     def test_students_cannot_update_courses(self):
-        """Students should not be able to update courses"""
+        # Students should not be able to update courses
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.student_token.access_token}')
         
         response = self.client.patch(f'/api/courses/{self.course.id}/', {
@@ -180,7 +177,7 @@ class AuthorizationBoundaryTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
     
     def test_instructors_cannot_update_other_instructors_courses(self):
-        """Instructors should not be able to update courses they don't own"""
+        # Instructors should not be able to update courses they don't own
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.other_instructor_token.access_token}')
         
         response = self.client.patch(f'/api/courses/{self.course.id}/', {
@@ -190,7 +187,7 @@ class AuthorizationBoundaryTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
     
     def test_instructors_cannot_enroll_in_courses(self):
-        """Instructors should not be able to enroll in courses"""
+        # Instructors should not be able to enroll in courses
         self.course.status = 'published'
         self.course.save()
         
@@ -203,7 +200,7 @@ class AuthorizationBoundaryTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
     
     def test_students_cannot_create_lessons(self):
-        """Students should not be able to create lessons"""
+        # Students should not be able to create lessons
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.student_token.access_token}')
         
         response = self.client.post('/api/lessons/', {
@@ -216,7 +213,7 @@ class AuthorizationBoundaryTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
     
     def test_students_can_only_see_own_enrollments(self):
-        """Students should only see their own enrollments"""
+        # Students should only see their own enrollments
         other_student = User.objects.create_user(
             email='otherstudent@test.com',
             password='testpass123',
@@ -245,7 +242,7 @@ class AuthorizationBoundaryTestCase(APITestCase):
         self.assertNotIn(other_enrollment.id, enrollment_ids)
     
     def test_unauthenticated_users_cannot_access_protected_endpoints(self):
-        """Unauthenticated users should receive 401"""
+        # Unauthenticated users should receive 401
         response = self.client.get('/api/courses/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         
@@ -257,10 +254,8 @@ class AuthorizationBoundaryTestCase(APITestCase):
 
 
 class EnrollmentLogicTestCase(APITestCase):
-    """Test enrollment and completion logic"""
-    
     def setUp(self):
-        """Set up test data"""
+        # Set up test data
         self.instructor = User.objects.create_user(
             email='instructor@test.com',
             password='testpass123',
@@ -304,7 +299,7 @@ class EnrollmentLogicTestCase(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.student_token.access_token}')
     
     def test_cannot_enroll_in_draft_course(self):
-        """Students should not be able to enroll in draft courses"""
+        # Students should not be able to enroll in draft courses
         draft_course = Course.objects.create(
             title='Draft Course',
             short_description='Draft',
@@ -320,7 +315,7 @@ class EnrollmentLogicTestCase(APITestCase):
         self.assertIn('course', response.data.get('errors', {}))
     
     def test_cannot_enroll_twice_in_same_course(self):
-        """Students should not be able to enroll twice in the same course"""
+        # Students should not be able to enroll twice in the same course
         # First enrollment
         response1 = self.client.post('/api/enrollments/', {
             'course': self.course.id
@@ -335,7 +330,7 @@ class EnrollmentLogicTestCase(APITestCase):
         self.assertIn('course', response2.data.get('errors', {}))
     
     def test_enrollment_creates_lesson_progress_records(self):
-        """Enrollment should create progress records for all lessons"""
+        # Enrollment should create progress records for all lessons
         response = self.client.post('/api/enrollments/', {
             'course': self.course.id
         })
@@ -356,7 +351,7 @@ class EnrollmentLogicTestCase(APITestCase):
         self.assertEqual(incomplete_count, 3)
     
     def test_sequential_lesson_completion_required(self):
-        """Lessons must be completed in sequential order"""
+        # Lessons must be completed in sequential order
         enrollment = Enrollment.objects.create(
             student=self.student,
             course=self.course
@@ -406,7 +401,7 @@ class EnrollmentLogicTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
     
     def test_completion_endpoint_enforces_sequential_order(self):
-        """The complete endpoint should enforce sequential order"""
+        # The complete endpoint should enforce sequential order
         enrollment = Enrollment.objects.create(
             student=self.student,
             course=self.course
@@ -436,7 +431,7 @@ class EnrollmentLogicTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
     
     def test_progress_information_calculation(self):
-        """Progress information should be calculated correctly"""
+        # Progress information should be calculated correctly
         enrollment = Enrollment.objects.create(
             student=self.student,
             course=self.course
@@ -470,10 +465,9 @@ class EnrollmentLogicTestCase(APITestCase):
 
 
 class AsyncTaskTriggeringTestCase(TestCase):
-    """Test async task triggering"""
-    
+
     def setUp(self):
-        """Set up test data"""
+        # Set up test data
         self.instructor = User.objects.create_user(
             email='instructor@test.com',
             password='testpass123',
@@ -509,7 +503,7 @@ class AsyncTaskTriggeringTestCase(TestCase):
     
     @patch('apps.courses.tasks.send_course_completion_notification.delay')
     def test_course_completion_triggers_async_task(self, mock_task):
-        """Completing all lessons should trigger async task"""
+        # Completing all lessons should trigger async task
         enrollment = Enrollment.objects.create(
             student=self.student,
             course=self.course
@@ -553,7 +547,7 @@ class AsyncTaskTriggeringTestCase(TestCase):
     
     @patch('apps.courses.tasks.send_course_completion_notification.delay')
     def test_partial_completion_does_not_trigger_task(self, mock_task):
-        """Partial completion should not trigger async task"""
+        # Partial completion should not trigger async task
         enrollment = Enrollment.objects.create(
             student=self.student,
             course=self.course
@@ -588,7 +582,7 @@ class AsyncTaskTriggeringTestCase(TestCase):
         self.assertIsNone(enrollment.completed_at)
     
     def test_task_handles_missing_enrollment_gracefully(self):
-        """Task should handle missing enrollment gracefully"""
+        # Task should handle missing enrollment gracefully
         from apps.courses.tasks import send_course_completion_notification
         
         # Call task with non-existent enrollment ID
@@ -599,7 +593,7 @@ class AsyncTaskTriggeringTestCase(TestCase):
     
     @patch('apps.courses.tasks.send_mail')
     def test_task_sends_notification_correctly(self, mock_send_mail):
-        """Task should send notification with correct details"""
+        # Task should send notification with correct details
         enrollment = Enrollment.objects.create(
             student=self.student,
             course=self.course
@@ -623,10 +617,8 @@ class AsyncTaskTriggeringTestCase(TestCase):
 
 
 class LessonOrderTestCase(APITestCase):
-    """Test lesson ordering and bulk creation"""
-    
     def setUp(self):
-        """Set up test data"""
+        # Set up test data
         self.instructor = User.objects.create_user(
             email='instructor@test.com',
             password='testpass123',
@@ -644,7 +636,7 @@ class LessonOrderTestCase(APITestCase):
         )
     
     def test_lessons_ordered_correctly(self):
-        """Lessons should be returned in correct order"""
+        # Lessons should be returned in correct order
         Lesson.objects.create(course=self.course, title='Lesson 3', content='Content', order=3)
         Lesson.objects.create(course=self.course, title='Lesson 1', content='Content', order=1)
         Lesson.objects.create(course=self.course, title='Lesson 2', content='Content', order=2)
@@ -656,7 +648,7 @@ class LessonOrderTestCase(APITestCase):
         self.assertEqual(orders, [1, 2, 3])
     
     def test_bulk_create_lessons(self):
-        """Should be able to create multiple lessons at once"""
+        # Should be able to create multiple lessons at once
         response = self.client.post('/api/lessons/bulk_create/', {
             'course': self.course.id,
             'lessons': [
@@ -664,7 +656,7 @@ class LessonOrderTestCase(APITestCase):
                 {'title': 'Lesson 2', 'content': 'Content 2', 'order': 2},
                 {'title': 'Lesson 3', 'content': 'Content 3', 'order': 3}
             ]
-        })
+        }, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(response.data), 3)

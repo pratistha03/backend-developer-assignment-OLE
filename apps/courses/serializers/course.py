@@ -19,7 +19,8 @@ class CourseSerializer(serializers.ModelSerializer):
 class CourseCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
-        fields = ['title', 'short_description']
+        fields = ['id', 'title', 'short_description', 'code', 'status']
+        read_only_fields = ['id', 'code', 'status']
     
     def create(self, validated_data):
         validated_data['instructor'] = self.context['request'].user

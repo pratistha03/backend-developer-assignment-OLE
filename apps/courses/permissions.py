@@ -35,4 +35,8 @@ class IsEnrollmentOwner(permissions.BasePermission):
     message = "You can only access your own enrollments."
     
     def has_object_permission(self, request, view, obj):
-        return obj.student == request.user
+        if hasattr(obj, 'student'):
+            return obj.student == request.user
+        elif hasattr(obj, 'enrollment'):
+            return obj.enrollment.student == request.user
+        return False

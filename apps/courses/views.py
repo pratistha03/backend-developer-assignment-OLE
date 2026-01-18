@@ -41,8 +41,34 @@ class CourseViewSet(viewsets.ModelViewSet):
             return [IsAuthenticated(), IsCourseOwner()]
         return [IsAuthenticated()]
     
+    def get_object(self):
+        if self.action in ['update', 'partial_update', 'destroy']:
+            lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+            lookup_value = self.kwargs[lookup_url_kwarg]
+            filter_kwargs = {self.lookup_field: lookup_value}
+            
+            try:
+                obj = Course.objects.get(**filter_kwargs)
+            except Course.DoesNotExist:
+                raise NotFound("Course not found")
+            
+            if obj.instructor != self.request.user:
+                raise PermissionDenied("You can only manage your own courses.")
+            
+            return obj
+        
+        return super().get_object()
+    
     def perform_create(self, serializer):
-        serializer.save(instructor=self.request.user, status='draft')
+        course = serializer.save(instructor=self.request.user, status='draft')
+        return course
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        course = self.perform_create(serializer)
+        response_serializer = CourseSerializer(course)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
     
     def perform_update(self, serializer):
         course = self.get_object()
@@ -66,7 +92,6 @@ class CourseViewSet(viewsets.ModelViewSet):
     def publish(self, request, pk=None):
         course = self.get_object()
         
-        # Permission class ensures user is the course owner, but add explicit check for clarity
         if course.instructor != request.user:
             raise PermissionDenied("You do not have permission to publish this course. You can only publish your own courses.")
         
