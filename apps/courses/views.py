@@ -44,6 +44,17 @@ class CourseViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(instructor=self.request.user, status='draft')
     
+    def perform_update(self, serializer):
+        course = self.get_object()
+        if course.instructor != self.request.user:
+            raise PermissionDenied("You do not have permission to update this course. You can only update your own courses.")
+        serializer.save()
+    
+    def perform_destroy(self, instance):
+        if instance.instructor != self.request.user:
+            raise PermissionDenied("You do not have permission to delete this course. You can only delete your own courses.")
+        instance.delete()
+    
     @extend_schema(
         operation_id='course_publish',
         summary='Publish a draft course',
@@ -51,14 +62,17 @@ class CourseViewSet(viewsets.ModelViewSet):
         request=None,
         responses=OpenApiResponse(description='Course published successfully')
     )
-    @action(detail=True, methods=['patch'], permission_classes=[IsCourseOwner])
+    @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated, IsCourseOwner])
     def publish(self, request, pk=None):
         course = self.get_object()
+        
+        # Permission class ensures user is the course owner, but add explicit check for clarity
+        if course.instructor != request.user:
+            raise PermissionDenied("You do not have permission to publish this course. You can only publish your own courses.")
+        
         if course.status != 'draft':
-            return Response(
-                {'error': 'Only draft courses can be published'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            raise ValidationError({"status": "Only draft courses can be published."})
+        
         course.status = 'published'
         course.save()
         return Response({'status': 'Course published successfully'}, status=status.HTTP_200_OK)
@@ -101,12 +115,9 @@ class LessonViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
     
     def perform_create(self, serializer):
-        
         course_id = self.request.data.get('course')
         if not course_id:
-            raise ValidationError(
-                {"course": "Course ID is required"}
-            )
+            raise ValidationError({"course": "Course ID is required"})
         
         try:
             course = Course.objects.get(id=course_id)
@@ -117,6 +128,17 @@ class LessonViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("You can only add lessons to your own courses")
         
         serializer.save(course=course)
+    
+    def perform_update(self, serializer):
+        lesson = self.get_object()
+        if lesson.course.instructor != self.request.user:
+            raise PermissionDenied("You do not have permission to update this lesson. You can only update lessons in your own courses.")
+        serializer.save()
+    
+    def perform_destroy(self, instance):
+        if instance.course.instructor != self.request.user:
+            raise PermissionDenied("You do not have permission to delete this lesson. You can only delete lessons from your own courses.")
+        instance.delete()
     
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated, IsInstructor])
     def bulk_create(self, request):
@@ -262,6 +284,7 @@ class LessonProgressViewSet(viewsets.ModelViewSet):
         return response
     
     @extend_schema(
+        request=None,
         operation_id='lesson_progress_complete',
         summary='Mark a lesson as completed',
         description='Mark a lesson as completed. This is a convenience endpoint that sets the lesson progress to completed.',
@@ -271,7 +294,7 @@ class LessonProgressViewSet(viewsets.ModelViewSet):
             404: OpenApiResponse(description='Not Found - Progress record does not exist')
         }
     )
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, IsStudent])
+    @action(detail=True,  methods=['post'], permission_classes=[IsAuthenticated, IsStudent])
     def complete(self, request, pk=None):
         progress = self.get_object()
         
@@ -296,6 +319,17 @@ class LessonProgressViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(progress)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+
+    @extend_schema(
+        request=None,
+        operation_id='lesson_progress_check_course_completion',
+        summary='Check if course is completed',
+        description='Check if course is completed. This is a helper method to check if the course is completed.',
+        responses={
+            200: OpenApiResponse(description='Course completed successfully'),
+        }
+    )
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated, IsStudent])
     def _check_course_completion(self, enrollment):
         total_lessons = enrollment.course.lessons.count()
         completed_lessons = LessonProgress.objects.filter(

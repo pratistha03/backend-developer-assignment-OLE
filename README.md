@@ -165,7 +165,7 @@ The API documentation is available via Swagger UI and ReDoc (powered by drf-spec
 To use authenticated endpoints in Swagger:
 1. First, obtain a JWT token by using the `/api/auth/login/` endpoint
 2. Click the "Authorize" button (lock icon) in Swagger UI
-3. Enter: `Bearer <your_access_token>` (replace `<your_access_token>` with your actual token)
+3. Enter: `<your_access_token>` 
 4. Click "Authorize" and then "Close"
 5. The authorization will persist across requests
 
@@ -196,7 +196,13 @@ To use authenticated endpoints in Swagger:
 ### Enrollments
 - `GET /api/enrollments/` - List user's enrollments (students only)
 - `POST /api/enrollments/` - Enroll in a course (students only)
-- `GET /api/enrollments/{id}/` - Get enrollment details
+- `GET /api/enrollments/{id}/` - Get enrollment details with progress information
+  - Returns progress data including:
+    - `total_lessons`: Total number of lessons in the course
+    - `completed_lessons`: Number of completed lessons
+    - `completion_percentage`: Percentage of completion (rounded to 2 decimals)
+    - `is_completed`: Boolean indicating if enrollment is completed
+  - **This is the primary endpoint for students to view their progress for a particular course**
 
 ### Progress
 - `GET /api/progress/` - List lesson progress (students only)
